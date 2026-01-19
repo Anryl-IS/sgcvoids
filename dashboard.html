@@ -18,13 +18,13 @@
             line-height: 1.5;
         }
 
-        /* Sidebar / Header Layout */
+
         .app-layout {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             opacity: 0;
-            /* aStart hidden for fade-in */
+
             transform: translateY(10px);
             animation: appFadeIn 0.8s ease forwards;
         }
@@ -36,7 +36,7 @@
             }
         }
 
-        /* Fade Out Class for Logout */
+
         body.fade-out {
             opacity: 0;
             transition: opacity 0.5s ease;
@@ -55,11 +55,11 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            /* Allow wrapping on mobile */
+
             gap: 10px;
         }
 
-        /* Tabs Navigation */
+
         .tabs {
             display: flex;
             gap: 10px;
@@ -70,11 +70,11 @@
             width: fit-content;
             max-width: 100%;
             overflow-x: auto;
-            /* Scrollable tabs on mobile */
+
             white-space: nowrap;
         }
 
-        /* Mobile Responsive Adjustments */
+
         @media (max-width: 768px) {
             .app-layout {
                 padding: 10px;
@@ -100,7 +100,7 @@
 
             .tab-btn {
                 flex: 1;
-                /* Distribute space */
+
                 padding: 10px 12px;
                 font-size: 0.85rem;
             }
@@ -115,7 +115,6 @@
 
             .analytics-grid {
                 grid-template-columns: 1fr;
-                /* Stack cards */
             }
         }
 
@@ -138,7 +137,6 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
-        /* Tab Content Areas */
         .tab-content {
             display: none;
             animation: fadeIn 0.3s ease;
@@ -160,7 +158,6 @@
             }
         }
 
-        /* Report Cards (Existing Styles) */
         .report-card {
             background: #fff;
             border-radius: 16px;
@@ -222,7 +219,6 @@
             color: #111827;
         }
 
-        /* Helper for Stock Table - specific tweaks */
         .compact-table {
             width: auto;
         }
@@ -263,7 +259,6 @@
             font-size: 0.85rem;
         }
 
-        /* ANALYTICS STYLES */
         .analytics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -452,30 +447,23 @@
     <script>
         let globalReports = [];
 
-        // Tab Switching
         window.switchTab = function (tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
             document.getElementById(`tab-${tabName}`).classList.add('active');
 
-            // Map tab names to button indices
             const tabMap = { 'voids': 0, 'analytics': 1, 'stock': 2 };
             if (tabMap[tabName] !== undefined) {
                 document.querySelectorAll('.tab-btn')[tabMap[tabName]].classList.add('active');
             }
         };
 
-        // TODO: Update this URL with the specific CSV link for "Sheet 2" (Stock Voids)
-        // Note: '2PACX' links are unique per sheet/publish setting. 
-        // You must go to File > Share > Publish to Web > Select "Sheet 2" > CSV and paste that link below.
         const STOCK_DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQeTaEHJsuYfXHSBK1DePr0wjxElZZtEMnObZ5_iRdyYAt-1SvfPGbKVrsHRtUMOFI5_LyJiWnySn80/pub?gid=1817485847&single=true&output=csv";
 
         async function loadSheetData() {
-            // ... existing loadSheetData code handles Tab 1 & 2 ...
-            loadStockData(); // Trigger stock load in parallel
+            loadStockData();
 
-            // Use a CORS proxy to avoid Google 400 errors caused by Referer/Origin headers from localhost
             const targetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQeTaEHJsuYfXHSBK1DePr0wjxElZZtEMnObZ5_iRdyYAt-1SvfPGbKVrsHRtUMOFI5_LyJiWnySn80/pub?output=csv&_t=" + Date.now();
             const url = "https://corsproxy.io/?" + encodeURIComponent(targetUrl);
 
@@ -484,7 +472,6 @@
                 if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
                 const text = await response.text();
 
-                // CSV Parsing Logic
                 const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
                 const reports = [];
                 let i = 0;
@@ -492,7 +479,6 @@
                 while (i < lines.length) {
                     let sectionTitle = stripQuotes(lines[i]);
                     if (isValidHeader(sectionTitle)) {
-                        // Fast forward to TELLER
                         let headersFound = false;
                         let limit = Math.min(lines.length, i + 6);
                         for (let k = i + 1; k < limit; k++) {
@@ -504,7 +490,7 @@
 
                         if (headersFound) {
                             while (lines[i] !== "TELLER" && i < lines.length) i++;
-                            if (lines[i] === "TELLER") i += 4; // Skip Header Block
+                            if (lines[i] === "TELLER") i += 4;
 
                             const rows = [];
                             let calcReceipts = 0;
@@ -512,18 +498,13 @@
 
                             while (i < lines.length) {
                                 if (lines[i].toLowerCase().startsWith("total :")) {
-                                    i++; // Skip Total line
-                                    // Skip receipts count line if valid
+                                    i++;
                                     if (i < lines.length && /^\d+$/.test(lines[i].replace(/,/g, ''))) i++;
-                                    // Skip amount count line if valid
                                     if (i < lines.length && /^\d+$/.test(lines[i].replace(/,/g, ''))) i++;
                                     break;
                                 }
-                                // Safety break if we run into next header likely
-                                // Heuristic: If we see something that looks like a header (CAPS-DASH)
                                 if (i < lines.length && lines[i].includes("-SPVR-")) break;
 
-                                // Check for formatting error (need at least 4 lines for a row)
                                 if (i + 3 >= lines.length) break;
 
                                 const name = stripQuotes(lines[i++]);
@@ -560,7 +541,6 @@
 
         function isValidHeader(str) {
             if (!str || str === "TELLER" || str.toLowerCase().startsWith("total :") || str === "OUTLET") return false;
-            // Basic heuristic: Supervisor sections usually look like "PLACE-SPVR-NAME"
             return str.includes("-") && (str.includes("SPVR") || str.toUpperCase() === str);
         }
 
@@ -570,7 +550,6 @@
             return str;
         }
 
-        // Render Tab 1
         function renderVoids(reports) {
             const container = document.getElementById("voidsContainer");
             container.innerHTML = "";
@@ -607,12 +586,10 @@
             });
         }
 
-        // Render Tab 2
         function renderAnalytics(reports) {
             const container = document.getElementById("analyticsContainer");
             container.innerHTML = "";
 
-            // Flatten all Items
             let allTellers = [];
             reports.forEach(rep => {
                 allTellers = [...allTellers, ...rep.rows];
@@ -620,17 +597,12 @@
 
             if (allTellers.length === 0) return;
 
-            // Sort by Amount Desc
             allTellers.sort((a, b) => b.amount - a.amount);
 
-            // Top 5 High Voids
             const top5 = allTellers.slice(0, 5);
 
-            // Bottom 5 Low Voids (filter out 0 if necessary? keeping all for now)
-            // Sort Asc for bottom
             const bottom5 = [...allTellers].sort((a, b) => a.amount - b.amount).slice(0, 5);
 
-            // HTML Generators
             const generateList = (items, isHigh) => {
                 return items.map((item, idx) => `
                 <li class="rank-item">
@@ -666,7 +638,6 @@
         async function loadStockData() {
             const container = document.getElementById("stockContainer");
             if (!STOCK_DATA_URL) {
-                // Keep the placeholder message if no URL is set
                 return;
             }
 
@@ -676,8 +647,6 @@
                 if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
                 const text = await response.text();
 
-                // Assuming simple CSV format for now: Header, Row, Row...
-                // If complex format like Tab 1, we will need to adjust this parser.
                 const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
 
                 renderStockAnalytics(lines);
@@ -695,7 +664,6 @@
                 return;
             }
 
-            // Simple CSV Parser
             const rows = lines.map(line => {
                 const cells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => stripQuotes(c.trim()));
                 return cells;
@@ -704,30 +672,21 @@
             const header = rows[0];
             const dataRows = rows.slice(1);
 
-            // ANALYTICS LOGIC: Time Series (Line Graph)
-            // 1. Find Date Column
             let dateIdx = header.findIndex(h => h.toLowerCase().includes("date") || h.toLowerCase().includes("time"));
-            // 2. Find Amount/Qty Column
             let valIdx = header.findIndex(h => h.toLowerCase().includes("amount") || h.toLowerCase().includes("qty") || h.toLowerCase().includes("quantity"));
 
-            // Heuristics if not found
             if (dateIdx === -1) {
-                // Try to find a column that looks like a date in the first row
                 if (dataRows.length > 0) {
                     dateIdx = dataRows[0].findIndex(c => !isNaN(Date.parse(c)));
                 }
             }
-            if (valIdx === -1) valIdx = header.length - 1; // Default to last column
+            if (valIdx === -1) valIdx = header.length - 1;
 
-            // If still no Date found, fall back to Item Bar Chart or show error
-            // User specifically asked for Line Graph based on Date, so we should try our best.
             const dateMap = {};
 
             dataRows.forEach(row => {
                 if (row.length <= valIdx || (dateIdx !== -1 && row.length <= dateIdx)) return;
 
-                // Use "Entry #" as Date if no Date found? No, that's bad.
-                // If parsed date is valid, use it.
                 let dateStr = dateIdx !== -1 ? row[dateIdx] : `Row ${dataRows.indexOf(row) + 1}`;
 
                 let val = parseInt(row[valIdx].replace(/,/g, '')) || 0;
@@ -736,17 +695,15 @@
                 dateMap[dateStr] += val;
             });
 
-            // Convert to array and sort by Date (if date-like)
             let timeSeries = Object.entries(dateMap)
                 .map(([date, val]) => ({ date, val }))
                 .sort((a, b) => {
                     const d1 = new Date(a.date);
                     const d2 = new Date(b.date);
                     if (!isNaN(d1) && !isNaN(d2)) return d1 - d2;
-                    return 0; // Keep order if not dates
+                    return 0;
                 });
 
-            // "First amount and date is the baseline"
             let datasets = [{
                 label: 'Void Amount',
                 data: timeSeries.map(i => i.val),
@@ -770,7 +727,6 @@
                 });
             }
 
-            // Generate Chart HTML
             const chartHtml = `
                 <div class="report-card" style="margin-bottom: 20px;">
                     <div class="report-header">Stock Voids Trend</div>
@@ -800,7 +756,6 @@
 
             container.innerHTML = chartHtml + tableHtml;
 
-            // Render Chart
             new Chart(document.getElementById('stockChart'), {
                 type: 'line',
                 data: {
@@ -826,7 +781,6 @@
             });
         }
 
-        // Logout Animation Handler
         document.addEventListener('DOMContentLoaded', () => {
             const logoutBtn = document.querySelector('.logout-btn');
             if (logoutBtn) {
