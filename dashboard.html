@@ -444,8 +444,68 @@
         .logout-btn:hover {
             background-color: #fecaca;
         }
+
+        @media print {
+            body {
+                background: white;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            header,
+            .tabs,
+            .watermark,
+            .tab-btn,
+            .print-btn {
+                display: none !important;
+            }
+
+            .app-layout {
+                padding: 0;
+                margin: 0;
+                max-width: none;
+                animation: none;
+                transform: none;
+                opacity: 1;
+            }
+
+            .report-card,
+            .stat-card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+                break-inside: avoid;
+                margin-bottom: 20px;
+                background: white;
+            }
+
+            .tab-content {
+                display: block !important;
+            }
+
+            .tab-content:not(.active) {
+                display: none !important;
+            }
+
+            #stockChart {
+                max-height: 300px;
+                width: 100% !important;
+            }
+
+            .report-card>div {
+                overflow: visible !important;
+            }
+
+            table {
+                font-size: 10pt;
+            }
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function printReport() {
+            window.print();
+        }
+    </script>
 </head>
 
 <body>
@@ -473,6 +533,18 @@
 
 
         <div id="tab-voids" class="tab-content active">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+                <button onclick="printReport()" class="print-btn"
+                    style="background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                        <rect x="6" y="14" width="12" height="8"></rect>
+                    </svg>
+                    Print Report
+                </button>
+            </div>
             <div id="voidsContainer">
                 <div class="loading-container">Loading data...</div>
             </div>
@@ -480,6 +552,18 @@
 
 
         <div id="tab-analytics" class="tab-content">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+                <button onclick="printReport()" class="print-btn"
+                    style="background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                        <rect x="6" y="14" width="12" height="8"></rect>
+                    </svg>
+                    Print Report
+                </button>
+            </div>
             <div class="analytics-grid" id="analyticsContainer">
 
             </div>
@@ -553,8 +637,8 @@
                             while (i < lines.length) {
                                 if (lines[i].toLowerCase().startsWith("total :")) {
                                     i++;
-                                    if (i < lines.length && /^\d+$/.test(lines[i].replace(/,/g, ''))) i++;
-                                    if (i < lines.length && /^\d+$/.test(lines[i].replace(/,/g, ''))) i++;
+                                    if (i < lines.length && /^[\d.,]+$/.test(lines[i])) i++;
+                                    if (i < lines.length && /^[\d.,]+$/.test(lines[i])) i++;
                                     break;
                                 }
                                 if (i < lines.length && lines[i].includes("-SPVR-")) break;
@@ -564,7 +648,7 @@
                                 const name = stripQuotes(lines[i++]);
                                 const outlet = stripQuotes(lines[i++]);
                                 const receipts = parseInt(stripQuotes(lines[i++]).replace(/,/g, '')) || 0;
-                                const amount = parseInt(stripQuotes(lines[i++]).replace(/,/g, '')) || 0;
+                                const amount = parseFloat(stripQuotes(lines[i++]).replace(/,/g, '')) || 0;
 
                                 calcReceipts += receipts;
                                 calcAmount += amount;
@@ -683,8 +767,43 @@
             <ul class="rank-list">${generateList(bottom5, false)}</ul>
         `;
 
+            const summaryCard = document.createElement('div');
+            summaryCard.className = 'report-card';
+            summaryCard.style.gridColumn = '1 / -1';
+
+            const sortedReports = [...reports].sort((a, b) => b.totalAmount - a.totalAmount);
+
+            const grandTotalReceipts = sortedReports.reduce((sum, rep) => sum + rep.totalReceipts, 0);
+            const grandTotalAmount = sortedReports.reduce((sum, rep) => sum + rep.totalAmount, 0);
+
+            let rowsHtml = sortedReports.map(rep => `
+                <tr>
+                    <td>${rep.title}</td>
+                    <td>${rep.totalReceipts}</td>
+                    <td>₱${rep.totalAmount.toLocaleString()}</td>
+                </tr>
+            `).join('');
+
+            summaryCard.innerHTML = `
+                <div class="report-header">Supervisor Summary</div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead><tr><th>SPVR</th><th>Total Receipts</th><th>Total Amount</th></tr></thead>
+                        <tbody>
+                            ${rowsHtml}
+                            <tr style="font-weight: 800; background-color: rgba(37, 99, 235, 0.05); border-top: 2px solid rgba(229, 231, 235, 0.5);">
+                                <td style="color: #2563eb;">GRAND TOTAL</td>
+                                <td>${grandTotalReceipts}</td>
+                                <td style="color: #2563eb;">₱${grandTotalAmount.toLocaleString()}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
             container.appendChild(highCard);
             container.appendChild(lowCard);
+            container.appendChild(summaryCard);
         }
 
         window.addEventListener("DOMContentLoaded", loadSheetData);
@@ -742,8 +861,7 @@
                 if (row.length <= valIdx || (dateIdx !== -1 && row.length <= dateIdx)) return;
 
                 let dateStr = dateIdx !== -1 ? row[dateIdx] : `Row ${dataRows.indexOf(row) + 1}`;
-
-                let val = parseInt(row[valIdx].replace(/,/g, '')) || 0;
+                let val = parseFloat(row[valIdx].replace(/,/g, '')) || 0;
 
                 if (!dateMap[dateStr]) dateMap[dateStr] = 0;
                 dateMap[dateStr] += val;
@@ -783,7 +901,26 @@
 
             const chartHtml = `
                 <div class="report-card" style="margin-bottom: 20px;">
-                    <div class="report-header">Stock Voids Trend</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div class="report-header" style="margin-bottom: 0; border: none; padding: 0;">Stock Voids Trend</div>
+                        <button onclick="printReport()" class="print-btn" style="
+                            background: #2563eb; 
+                            color: white; 
+                            border: none; 
+                            padding: 8px 16px; 
+                            border-radius: 8px; 
+                            font-weight: 600; 
+                            cursor: pointer; 
+                            display: flex; 
+                            align-items: center; 
+                            gap: 6px;
+                            font-size: 0.85rem;
+                            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+                        ">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                            Print Report
+                        </button>
+                    </div>
                     <div style="height: 350px; position: relative;">
                         <canvas id="stockChart"></canvas>
                     </div>
