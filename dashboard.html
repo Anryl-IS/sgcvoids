@@ -54,6 +54,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            /* Allow wrapping on mobile */
+            gap: 10px;
         }
 
         /* Tabs Navigation */
@@ -65,6 +68,55 @@
             padding: 5px;
             border-radius: 12px;
             width: fit-content;
+            max-width: 100%;
+            overflow-x: auto;
+            /* Scrollable tabs on mobile */
+            white-space: nowrap;
+        }
+
+        /* Mobile Responsive Adjustments */
+        @media (max-width: 768px) {
+            .app-layout {
+                padding: 10px;
+            }
+
+            header {
+                padding: 15px;
+                font-size: 1.1rem;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            header>div:last-child {
+                width: 100%;
+                justify-content: space-between;
+                margin-top: 10px;
+            }
+
+            .tabs {
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .tab-btn {
+                flex: 1;
+                /* Distribute space */
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+
+            .watermark {
+                font-size: 0.6rem;
+                bottom: 10px;
+                right: 10px;
+                opacity: 0.8;
+                padding: 4px 8px;
+            }
+
+            .analytics-grid {
+                grid-template-columns: 1fr;
+                /* Stack cards */
+            }
         }
 
         .tab-btn {
@@ -543,10 +595,12 @@
 
                 card.innerHTML = `
                 <div class="report-header">${rep.title}</div>
-                <table>
-                    <thead><tr><th>Teller</th><th>Outlet</th><th>Receipts</th><th>Amount</th></tr></thead>
-                    <tbody>${rowsHtml}</tbody>
-                </table>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead><tr><th>Teller</th><th>Outlet</th><th>Receipts</th><th>Amount</th></tr></thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                </div>
                 <div class="total-row">Total: ${rep.totalReceipts} receipts <span>₱${rep.totalAmount.toLocaleString()}</span></div>
             `;
                 container.appendChild(card);
