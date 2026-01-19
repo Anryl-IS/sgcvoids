@@ -499,6 +499,25 @@
                 font-size: 10pt;
             }
         }
+
+        .view-data-card {
+            cursor: pointer;
+            text-align: center;
+            border: 2px dashed #cbd5e1;
+            background: rgba(255, 255, 255, 0.5);
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100px;
+        }
+
+        .view-data-card:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+            color: #2563eb;
+            transform: translateY(-2px);
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -925,27 +944,92 @@
                         <canvas id="stockChart"></canvas>
                     </div>
                 </div>
-            `;
 
-            let tableHtml = `
-                <div class="report-card">
-                    <div class="report-header">Stock Voids Data</div>
-                    <div style="overflow-x: auto;">
-                        <table class="compact-table">
-                            <thead>
-                                <tr>${header.map(h => `<th>${h}</th>`).join('')}</tr>
-                            </thead>
-                            <tbody>
-                                ${dataRows.map(row => `
-                                    <tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                <div class="report-card" style="margin-bottom: 20px;">
+                    <div class="report-header">Weekly Comparison (Day 1-7 vs Day 8-14)</div>
+                    <div style="height: 350px; position: relative;">
+                        <canvas id="comparisonChart"></canvas>
                     </div>
                 </div>
             `;
 
-            container.innerHTML = chartHtml + tableHtml;
+            // Calculate Grand Total
+            let grandTotal = 0;
+            dataRows.forEach(row => {
+                if (row.length <= valIdx) return;
+                let val = parseFloat(row[valIdx].replace(/,/g, '')) || 0;
+                grandTotal += val;
+            });
+
+            // Calculate High/Low Days
+            let sortedByVal = [...timeSeries].sort((a, b) => b.val - a.val);
+            let highestDay = sortedByVal.length > 0 ? sortedByVal[0] : { date: '-', val: 0 };
+            let lowestDay = sortedByVal.length > 0 ? sortedByVal[sortedByVal.length - 1] : { date: '-', val: 0 };
+
+            const summaryCardsHtml = `
+                <div class="analytics-grid" style="margin-bottom: 20px;">
+                    <div class="stat-card high-voids">
+                        <div class="stat-title">Highest Daily Void <span></span></div>
+                        <div class="rank-value">₱${highestDay.val.toLocaleString()}</div>
+                        <div style="font-size: 0.85rem; color: #6b7280; margin-top: 5px;">${highestDay.date}</div>
+                    </div>
+                    <div class="stat-card low-voids">
+                        <div class="stat-title">Lowest Daily Void <span></span></div>
+                        <div class="rank-value">₱${lowestDay.val.toLocaleString()}</div>
+                        <div style="font-size: 0.85rem; color: #6b7280; margin-top: 5px;">${lowestDay.date}</div>
+                    </div>
+                    <div class="stat-card" style="border-top: 4px solid #3b82f6;">
+                        <div class="stat-title">Grand Total <span></span></div>
+                        <div class="rank-value" style="color: #2563eb;">₱${grandTotal.toLocaleString()}</div>
+                         <div style="font-size: 0.85rem; color: #6b7280; margin-top: 5px;">All Time</div>
+                    </div>
+                </div>
+            `;
+
+            const toggleBtnHtml = `
+                <div class="report-card view-data-card" onclick="toggleStockData()" style="margin-bottom: 20px;">
+                    <h3 id="stockDataToggleText" style="margin:0; font-size:1rem; font-weight:600; color: inherit; display:flex; align-items:center; gap:8px;">
+                        <span>▶</span> Show Detailed Stock Voids Data
+                    </h3>
+                </div>
+            `;
+
+            const collapsibleTableHtml = `
+                <div id="stockDataTable" style="display: none; margin-bottom: 20px; animation: fadeIn 0.3s ease;">
+                    <div class="report-card">
+                         <div class="report-header">Stock Voids Data</div>
+                         <div style="overflow-x: auto; max-height: 500px;">
+                            <table class="compact-table">
+                                <thead style="position: sticky; top: 0; z-index: 10;">
+                                    <tr>${header.map(h => `<th>${h}</th>`).join('')}</tr>
+                                </thead>
+                                <tbody>
+                                    ${dataRows.map(row => `
+                                        <tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="total-row">Grand Total: <span>₱${grandTotal.toLocaleString()}</span></div>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = summaryCardsHtml + toggleBtnHtml + collapsibleTableHtml + chartHtml;
+
+            // Define Toggle Function
+            window.toggleStockData = function () {
+                const tableDiv = document.getElementById('stockDataTable');
+                const toggleText = document.getElementById('stockDataToggleText');
+
+                if (tableDiv.style.display === 'none') {
+                    tableDiv.style.display = 'block';
+                    toggleText.innerHTML = '<span>▼</span> Hide Detailed Stock Voids Data';
+                } else {
+                    tableDiv.style.display = 'none';
+                    toggleText.innerHTML = '<span>▶</span> Show Detailed Stock Voids Data';
+                }
+            }
 
             const ctx = document.getElementById('stockChart').getContext('2d');
 
@@ -967,6 +1051,70 @@
                 data: {
                     labels: timeSeries.map(i => i.date),
                     datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 6 } },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#1f2937',
+                            bodyColor: '#4b5563',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // Comparison Chart Logic
+            const compCtx = document.getElementById('comparisonChart').getContext('2d');
+            const compLabels = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
+
+            const week1Data = timeSeries.slice(0, 7);
+            const week2Data = timeSeries.slice(7, 14);
+
+            const compDatasets = [
+                {
+                    label: `Week 1 (${week1Data[0]?.date || 'Start'} - ${week1Data[week1Data.length - 1]?.date || 'End'})`,
+                    data: compLabels.map((_, i) => week1Data[i] ? week1Data[i].val : null),
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                },
+                {
+                    label: `Week 2 (${week2Data[0]?.date || 'Start'} - ${week2Data[week2Data.length - 1]?.date || 'End'})`,
+                    data: compLabels.map((_, i) => week2Data[i] ? week2Data[i].val : null),
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }
+            ];
+
+            new Chart(compCtx, {
+                type: 'line',
+                data: {
+                    labels: compLabels,
+                    datasets: compDatasets
                 },
                 options: {
                     responsive: true,
