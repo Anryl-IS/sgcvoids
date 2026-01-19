@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Void Tracker Dashboard</title>
+    <link rel="icon" type="image/png" href="https://i.imgur.com/6SF5KQG.png">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+            color: #1f2937;
+            line-height: 1.5;
+        }
+
+        /* Sidebar / Header Layout */
+        .app-layout {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            opacity: 0;
+            /* aStart hidden for fade-in */
+            transform: translateY(10px);
+            animation: appFadeIn 0.8s ease forwards;
+        }
+
+        @keyframes appFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Fade Out Class for Logout */
+        body.fade-out {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        header {
+            background: #ffffff;
+            color: #1e3a8a;
+            padding: 20px 30px;
+            font-weight: 800;
+            font-size: 1.5rem;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Tabs Navigation */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: #e5e7eb;
+            padding: 5px;
+            border-radius: 12px;
+            width: fit-content;
+        }
+
+        .tab-btn {
+            padding: 10px 24px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: #6b7280;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+        }
+
+        .tab-btn.active {
+            background: #ffffff;
+            color: #2563eb;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Tab Content Areas */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Report Cards (Existing Styles) */
+        .report-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+            border: 1px solid #f3f4f6;
+        }
+
+        .report-header {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+        }
+
+        .report-header::before {
+            content: '';
+            width: 4px;
+            height: 18px;
+            background: #3b82f6;
+            margin-right: 12px;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th {
+            text-align: left;
+            color: #6b7280;
+            background: #f9fafb;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 12px 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            color: #374151;
+            transition: background 0.1s;
+        }
+
+        td:last-child {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        /* Helper for Stock Table - specific tweaks */
+        .compact-table {
+            width: auto;
+        }
+
+        .compact-table th {
+            padding: 6px 10px;
+            font-size: 0.7rem;
+        }
+
+        .compact-table td {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .compact-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover td {
+            background-color: #f9fafb;
+        }
+
+        .total-row {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #e5e7eb;
+            text-align: right;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .total-row span {
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        /* ANALYTICS STYLES */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-card.high-voids {
+            border-top: 4px solid #ef4444;
+        }
+
+        .stat-card.low-voids {
+            border-top: 4px solid #10b981;
+        }
+
+        .stat-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .high-voids .stat-title {
+            color: #b91c1c;
+        }
+
+        .low-voids .stat-title {
+            color: #047857;
+        }
+
+        .rank-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .rank-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .rank-item:last-child {
+            border-bottom: none;
+        }
+
+        .rank-info h4 {
+            margin: 0;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .rank-info p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: #9ca3af;
+        }
+
+        .rank-value {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .high-voids .rank-value {
+            color: #ef4444;
+        }
+
+        .low-voids .rank-value {
+            color: #10b981;
+        }
+
+        .tag {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #f3f4f6;
+            color: #6b7280;
+            margin-left: 8px;
+            font-weight: normal;
+        }
+
+        .loading-container {
+            text-align: center;
+            padding: 50px;
+            color: #9ca3af;
+        }
+
+        .watermark {
+            position: fixed;
+            bottom: 15px;
+            right: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #6b7280;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 6px 12px;
+            border-radius: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            opacity: 1;
+            pointer-events: none;
+            z-index: 100;
+            user-select: none;
+        }
+
+        .logout-btn {
+            background-color: #fee2e2;
+            color: #ef4444;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+            margin-left: 20px;
+        }
+
+        .logout-btn:hover {
+            background-color: #fecaca;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="watermark">Designed and Developed By : Edwin Angelo Catequista</div>
+
+    <div class="app-layout">
+        <header>
+            <div>5a Royal Gaming OPC - Voids</div>
+            <div style="display: flex; align-items: center;">
+                <span style="font-size: 0.9rem; font-weight: 500; color: #6b7280;">Live Data</span>
+                <a href="index.html" class="logout-btn">Logout</a>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('voids')">All Voids</button>
+            <button class="tab-btn" onclick="switchTab('analytics')">Analytics</button>
+            <button class="tab-btn" onclick="switchTab('stock')">Stock Void Analytics</button>
+        </div>
+
+        <!-- Tab 1: Voids List -->
+        <div id="tab-voids" class="tab-content active">
+            <div id="voidsContainer">
+                <div class="loading-container">Loading data...</div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Analytics -->
+        <div id="tab-analytics" class="tab-content">
+            <div class="analytics-grid" id="analyticsContainer">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Tab 3: Stock Analytics -->
+        <div id="tab-stock" class="tab-content">
+            <div id="stockContainer">
+                <div class="loading-container">
+                    <h3>Waiting for Data Source...</h3>
+                    <p>To view Stock Void Analytics, please update the code with the Published CSV Link for
+                        <strong>Sheet 2</strong>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let globalReports = [];
+
+        // Tab Switching
+        window.switchTab = function (tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+
+            // Map tab names to button indices
+            const tabMap = { 'voids': 0, 'analytics': 1, 'stock': 2 };
+            if (tabMap[tabName] !== undefined) {
+                document.querySelectorAll('.tab-btn')[tabMap[tabName]].classList.add('active');
+            }
+        };
+
+        // TODO: Update this URL with the specific CSV link for "Sheet 2" (Stock Voids)
+        // Note: '2PACX' links are unique per sheet/publish setting. 
+        // You must go to File > Share > Publish to Web > Select "Sheet 2" > CSV and paste that link below.
+        const STOCK_DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQeTaEHJsuYfXHSBK1DePr0wjxElZZtEMnObZ5_iRdyYAt-1SvfPGbKVrsHRtUMOFI5_LyJiWnySn80/pub?gid=1817485847&single=true&output=csv";
+
+        async function loadSheetData() {
+            // ... existing loadSheetData code handles Tab 1 & 2 ...
+            loadStockData(); // Trigger stock load in parallel
+
+            // Use a CORS proxy to avoid Google 400 errors caused by Referer/Origin headers from localhost
+            const targetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQeTaEHJsuYfXHSBK1DePr0wjxElZZtEMnObZ5_iRdyYAt-1SvfPGbKVrsHRtUMOFI5_LyJiWnySn80/pub?output=csv&_t=" + Date.now();
+            const url = "https://corsproxy.io/?" + encodeURIComponent(targetUrl);
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                const text = await response.text();
+
+                // CSV Parsing Logic
+                const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+                const reports = [];
+                let i = 0;
+
+                while (i < lines.length) {
+                    let sectionTitle = stripQuotes(lines[i]);
+                    if (isValidHeader(sectionTitle)) {
+                        // Fast forward to TELLER
+                        let headersFound = false;
+                        let limit = Math.min(lines.length, i + 6);
+                        for (let k = i + 1; k < limit; k++) {
+                            if (lines[k] === "TELLER") {
+                                headersFound = true;
+                                break;
+                            }
+                        }
+
+                        if (headersFound) {
+                            while (lines[i] !== "TELLER" && i < lines.length) i++;
+                            if (lines[i] === "TELLER") i += 4; // Skip Header Block
+
+                            const rows = [];
+                            let calcReceipts = 0;
+                            let calcAmount = 0;
+
+                            while (i < lines.length) {
+                                if (lines[i].toLowerCase().startsWith("total :")) {
+                                    i++; // Skip Total line
+                                    // Skip receipts count line if valid
+                                    if (i < lines.length && /^\d+$/.test(lines[i].replace(/,/g, ''))) i++;
+                                    // Skip amount count line if valid
+                                    if (i < lines.length && /^\d+$/.test(lines[i].replace(/,/g, ''))) i++;
+                                    break;
+                                }
+                                // Safety break if we run into next header likely
+                                // Heuristic: If we see something that looks like a header (CAPS-DASH)
+                                if (i < lines.length && lines[i].includes("-SPVR-")) break;
+
+                                // Check for formatting error (need at least 4 lines for a row)
+                                if (i + 3 >= lines.length) break;
+
+                                const name = stripQuotes(lines[i++]);
+                                const outlet = stripQuotes(lines[i++]);
+                                const receipts = parseInt(stripQuotes(lines[i++]).replace(/,/g, '')) || 0;
+                                const amount = parseInt(stripQuotes(lines[i++]).replace(/,/g, '')) || 0;
+
+                                calcReceipts += receipts;
+                                calcAmount += amount;
+                                rows.push({ name, outlet, receipts, amount, section: sectionTitle });
+                            }
+
+                            reports.push({
+                                title: sectionTitle,
+                                rows: rows,
+                                totalReceipts: calcReceipts,
+                                totalAmount: calcAmount
+                            });
+                            continue;
+                        }
+                    }
+                    i++;
+                }
+
+                globalReports = reports;
+                renderVoids(reports);
+                renderAnalytics(reports);
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById("voidsContainer").innerHTML = `<div class='loading-container' style='color: #ef4444'>Error loading data: ${e.message}</div>`;
+            }
+        }
+
+        function isValidHeader(str) {
+            if (!str || str === "TELLER" || str.toLowerCase().startsWith("total :") || str === "OUTLET") return false;
+            // Basic heuristic: Supervisor sections usually look like "PLACE-SPVR-NAME"
+            return str.includes("-") && (str.includes("SPVR") || str.toUpperCase() === str);
+        }
+
+        function stripQuotes(str) {
+            if (!str) return "";
+            if (str.startsWith('"') && str.endsWith('"')) return str.substring(1, str.length - 1);
+            return str;
+        }
+
+        // Render Tab 1
+        function renderVoids(reports) {
+            const container = document.getElementById("voidsContainer");
+            container.innerHTML = "";
+
+            if (reports.length === 0) {
+                container.innerHTML = "<div class='loading-container'>No data found.</div>";
+                return;
+            }
+
+            reports.forEach(rep => {
+                const card = document.createElement("div");
+                card.className = "report-card";
+
+                let rowsHtml = rep.rows.map(r => `
+                <tr>
+                    <td>${r.name}</td>
+                    <td>${r.outlet}</td>
+                    <td>${r.receipts}</td>
+                    <td>₱${r.amount.toLocaleString()}</td>
+                </tr>
+            `).join('');
+
+                card.innerHTML = `
+                <div class="report-header">${rep.title}</div>
+                <table>
+                    <thead><tr><th>Teller</th><th>Outlet</th><th>Receipts</th><th>Amount</th></tr></thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+                <div class="total-row">Total: ${rep.totalReceipts} receipts <span>₱${rep.totalAmount.toLocaleString()}</span></div>
+            `;
+                container.appendChild(card);
+            });
+        }
+
+        // Render Tab 2
+        function renderAnalytics(reports) {
+            const container = document.getElementById("analyticsContainer");
+            container.innerHTML = "";
+
+            // Flatten all Items
+            let allTellers = [];
+            reports.forEach(rep => {
+                allTellers = [...allTellers, ...rep.rows];
+            });
+
+            if (allTellers.length === 0) return;
+
+            // Sort by Amount Desc
+            allTellers.sort((a, b) => b.amount - a.amount);
+
+            // Top 5 High Voids
+            const top5 = allTellers.slice(0, 5);
+
+            // Bottom 5 Low Voids (filter out 0 if necessary? keeping all for now)
+            // Sort Asc for bottom
+            const bottom5 = [...allTellers].sort((a, b) => a.amount - b.amount).slice(0, 5);
+
+            // HTML Generators
+            const generateList = (items, isHigh) => {
+                return items.map((item, idx) => `
+                <li class="rank-item">
+                    <div class="rank-info">
+                        <h4>${idx + 1}. ${item.name} <span class="tag">${item.section}</span></h4>
+                        <p>${item.outlet} • <strong>${item.receipts} Receipts</strong></p>
+                    </div>
+                    <div class="rank-value">₱${item.amount.toLocaleString()}</div>
+                </li>
+            `).join('');
+            };
+
+            const highCard = document.createElement('div');
+            highCard.className = 'stat-card high-voids';
+            highCard.innerHTML = `
+            <div class="stat-title">Highest Voids <span>⚠️</span></div>
+            <ul class="rank-list">${generateList(top5, true)}</ul>
+        `;
+
+            const lowCard = document.createElement('div');
+            lowCard.className = 'stat-card low-voids';
+            lowCard.innerHTML = `
+            <div class="stat-title">Lowest Voids <span>✅</span></div>
+            <ul class="rank-list">${generateList(bottom5, false)}</ul>
+        `;
+
+            container.appendChild(highCard);
+            container.appendChild(lowCard);
+        }
+
+        window.addEventListener("DOMContentLoaded", loadSheetData);
+
+        async function loadStockData() {
+            const container = document.getElementById("stockContainer");
+            if (!STOCK_DATA_URL) {
+                // Keep the placeholder message if no URL is set
+                return;
+            }
+
+            const url = "https://corsproxy.io/?" + encodeURIComponent(STOCK_DATA_URL) + "&_t=" + Date.now();
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                const text = await response.text();
+
+                // Assuming simple CSV format for now: Header, Row, Row...
+                // If complex format like Tab 1, we will need to adjust this parser.
+                const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+
+                renderStockAnalytics(lines);
+
+            } catch (e) {
+                console.error("Stock Load Error:", e);
+                container.innerHTML = `<div class='loading-container' style='color: #ef4444'>Error loading stock data: ${e.message}</div>`;
+            }
+        }
+
+        function renderStockAnalytics(lines) {
+            const container = document.getElementById("stockContainer");
+            if (lines.length === 0) {
+                container.innerHTML = "<div class='loading-container'>No stock data found.</div>";
+                return;
+            }
+
+            // Simple CSV Parser
+            const rows = lines.map(line => {
+                const cells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => stripQuotes(c.trim()));
+                return cells;
+            });
+
+            const header = rows[0];
+            const dataRows = rows.slice(1);
+
+            // ANALYTICS LOGIC: Time Series (Line Graph)
+            // 1. Find Date Column
+            let dateIdx = header.findIndex(h => h.toLowerCase().includes("date") || h.toLowerCase().includes("time"));
+            // 2. Find Amount/Qty Column
+            let valIdx = header.findIndex(h => h.toLowerCase().includes("amount") || h.toLowerCase().includes("qty") || h.toLowerCase().includes("quantity"));
+
+            // Heuristics if not found
+            if (dateIdx === -1) {
+                // Try to find a column that looks like a date in the first row
+                if (dataRows.length > 0) {
+                    dateIdx = dataRows[0].findIndex(c => !isNaN(Date.parse(c)));
+                }
+            }
+            if (valIdx === -1) valIdx = header.length - 1; // Default to last column
+
+            // If still no Date found, fall back to Item Bar Chart or show error
+            // User specifically asked for Line Graph based on Date, so we should try our best.
+            const dateMap = {};
+
+            dataRows.forEach(row => {
+                if (row.length <= valIdx || (dateIdx !== -1 && row.length <= dateIdx)) return;
+
+                // Use "Entry #" as Date if no Date found? No, that's bad.
+                // If parsed date is valid, use it.
+                let dateStr = dateIdx !== -1 ? row[dateIdx] : `Row ${dataRows.indexOf(row) + 1}`;
+
+                let val = parseInt(row[valIdx].replace(/,/g, '')) || 0;
+
+                if (!dateMap[dateStr]) dateMap[dateStr] = 0;
+                dateMap[dateStr] += val;
+            });
+
+            // Convert to array and sort by Date (if date-like)
+            let timeSeries = Object.entries(dateMap)
+                .map(([date, val]) => ({ date, val }))
+                .sort((a, b) => {
+                    const d1 = new Date(a.date);
+                    const d2 = new Date(b.date);
+                    if (!isNaN(d1) && !isNaN(d2)) return d1 - d2;
+                    return 0; // Keep order if not dates
+                });
+
+            // "First amount and date is the baseline"
+            let datasets = [{
+                label: 'Void Amount',
+                data: timeSeries.map(i => i.val),
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.3,
+                fill: true
+            }];
+
+            if (timeSeries.length > 0) {
+                const baselineVal = timeSeries[0].val;
+                const baselineData = timeSeries.map(() => baselineVal);
+                datasets.push({
+                    label: 'Baseline (Start)',
+                    data: baselineData,
+                    borderColor: '#ef4444',
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    borderWidth: 2,
+                    fill: false
+                });
+            }
+
+            // Generate Chart HTML
+            const chartHtml = `
+                <div class="report-card" style="margin-bottom: 20px;">
+                    <div class="report-header">Stock Voids Trend</div>
+                    <div style="height: 350px; position: relative;">
+                        <canvas id="stockChart"></canvas>
+                    </div>
+                </div>
+            `;
+
+            let tableHtml = `
+                <div class="report-card">
+                    <div class="report-header">Stock Voids Data</div>
+                    <div style="overflow-x: auto;">
+                        <table class="compact-table">
+                            <thead>
+                                <tr>${header.map(h => `<th>${h}</th>`).join('')}</tr>
+                            </thead>
+                            <tbody>
+                                ${dataRows.map(row => `
+                                    <tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = chartHtml + tableHtml;
+
+            // Render Chart
+            new Chart(document.getElementById('stockChart'), {
+                type: 'line',
+                data: {
+                    labels: timeSeries.map(i => i.date),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // Logout Animation Handler
+        document.addEventListener('DOMContentLoaded', () => {
+            const logoutBtn = document.querySelector('.logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.body.classList.add('fade-out');
+                    setTimeout(() => {
+                        window.location.href = logoutBtn.href;
+                    }, 500);
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
