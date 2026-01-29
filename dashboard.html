@@ -11,10 +11,10 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at 10% 20%, rgb(240, 252, 255) 0%, rgb(243, 244, 246) 90.2%);
+            background: radial-gradient(circle at 10% 20%, rgb(17, 24, 39) 0%, rgb(0, 0, 0) 90.2%);
             margin: 0;
             padding: 0;
-            color: #1f2937;
+            color: #f3f4f6;
             line-height: 1.5;
             min-height: 100vh;
         }
@@ -47,13 +47,11 @@
             pointer-events: none;
         }
 
-
         .app-layout {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             opacity: 0;
-
             transform: translateY(10px);
             animation: appFadeIn 0.8s ease forwards;
         }
@@ -65,50 +63,46 @@
             }
         }
 
-
         body.fade-out {
             opacity: 0;
             transition: opacity 0.5s ease;
         }
 
         header {
-            background: rgba(255, 255, 255, 0.7);
+            background: rgba(31, 41, 55, 0.7);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            color: #1e3a8a;
+            color: #e5e7eb;
             padding: 24px 32px;
             font-weight: 800;
             font-size: 1.5rem;
             border-radius: 20px;
             margin-bottom: 24px;
             box-shadow:
-                0 4px 6px -1px rgba(0, 0, 0, 0.02),
-                inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+                0 4px 6px -1px rgba(0, 0, 0, 0.5),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             gap: 10px;
         }
-
 
         .tabs {
             display: flex;
             gap: 8px;
             margin-bottom: 30px;
-            background: rgba(255, 255, 255, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(31, 41, 55, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(8px);
             padding: 6px;
             border-radius: 16px;
             width: fit-content;
             max-width: 100%;
             overflow-x: auto;
-
             white-space: nowrap;
         }
-
 
         @media (max-width: 768px) {
             .app-layout {
@@ -135,7 +129,6 @@
 
             .tab-btn {
                 flex: 1;
-
                 padding: 10px 12px;
                 font-size: 0.85rem;
             }
@@ -158,7 +151,7 @@
             border-radius: 8px;
             border: none;
             background: transparent;
-            color: #6b7280;
+            color: #9ca3af;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
@@ -167,9 +160,9 @@
         }
 
         .tab-btn.active {
-            background: #fff;
-            color: #2563eb;
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+            background: #374151;
+            color: #60a5fa;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         .tab-content {
@@ -194,28 +187,30 @@
         }
 
         .report-card {
-            background: rgba(255, 255, 255, 0.7);
+            background: rgba(31, 41, 55, 0.7);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-radius: 20px;
             padding: 30px;
             margin-bottom: 25px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 10px 15px -3px rgba(0, 0, 0, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             transition: transform 0.2s ease;
+            color: #f3f4f6;
         }
 
         .report-card:hover {
             transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .report-header {
             font-size: 1.1rem;
             font-weight: 700;
-            color: #374151;
+            color: #f3f4f6;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid #374151;
             display: flex;
             align-items: center;
         }
@@ -239,27 +234,27 @@
 
         th {
             text-align: left;
-            color: #4b5563;
-            background: rgba(243, 244, 246, 0.6);
+            color: #d1d5db;
+            background: rgba(55, 65, 81, 0.6);
             backdrop-filter: blur(4px);
             font-size: 0.75rem;
             font-weight: 700;
             padding: 16px;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         td {
             padding: 14px 16px;
-            border-bottom: 1px solid rgba(243, 244, 246, 0.5);
-            color: #374151;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #e5e7eb;
             transition: background 0.1s;
         }
 
         td:last-child {
             font-weight: 600;
-            color: #111827;
+            color: #f9fafb;
         }
 
         .compact-table {
@@ -282,21 +277,21 @@
         }
 
         tbody tr:hover td {
-            background-color: rgba(249, 250, 251, 0.6);
+            background-color: rgba(55, 65, 81, 0.6);
         }
 
         .total-row {
             margin-top: 15px;
             padding-top: 15px;
-            border-top: 1px dashed #e5e7eb;
+            border-top: 1px dashed #374151;
             text-align: right;
             font-weight: 700;
-            color: #1f2937;
+            color: #f3f4f6;
         }
 
         .total-row span {
-            background: #eff6ff;
-            color: #1d4ed8;
+            background: #1e3a8a;
+            color: #93c5fd;
             padding: 4px 10px;
             border-radius: 20px;
             font-size: 0.85rem;
@@ -309,18 +304,20 @@
         }
 
         .stat-card {
-            background: rgba(255, 255, 255, 0.7);
+            background: rgba(31, 41, 55, 0.7);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-radius: 20px;
             padding: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
             transition: transform 0.2s ease;
+            color: #f3f4f6;
         }
 
         .stat-card:hover {
             transform: translateY(-3px);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .stat-card.high-voids {
@@ -341,11 +338,11 @@
         }
 
         .high-voids .stat-title {
-            color: #b91c1c;
+            color: #fca5a5;
         }
 
         .low-voids .stat-title {
-            color: #047857;
+            color: #6ee7b7;
         }
 
         .rank-list {
@@ -359,7 +356,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 12px 0;
-            border-bottom: 1px solid #f3f4f6;
+            border-bottom: 1px solid #374151;
         }
 
         .rank-item:last-child {
@@ -370,7 +367,7 @@
             margin: 0;
             font-size: 0.9rem;
             font-weight: 600;
-            color: #1f2937;
+            color: #f3f4f6;
             margin-bottom: 4px;
         }
 
@@ -386,19 +383,19 @@
         }
 
         .high-voids .rank-value {
-            color: #ef4444;
+            color: #f87171;
         }
 
         .low-voids .rank-value {
-            color: #10b981;
+            color: #34d399;
         }
 
         .tag {
             font-size: 0.7rem;
             padding: 2px 6px;
             border-radius: 4px;
-            background: #f3f4f6;
-            color: #6b7280;
+            background: #374151;
+            color: #d1d5db;
             margin-left: 8px;
             font-weight: normal;
         }
@@ -415,12 +412,12 @@
             right: 20px;
             font-size: 0.75rem;
             font-weight: 600;
-            color: #6b7280;
-            background-color: rgba(255, 255, 255, 0.9);
+            color: #9ca3af;
+            background-color: rgba(31, 41, 55, 0.9);
             padding: 6px 12px;
             border-radius: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            border: 1px solid #e5e7eb;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            border: 1px solid #374151;
             opacity: 1;
             pointer-events: none;
             z-index: 100;
@@ -428,9 +425,9 @@
         }
 
         .logout-btn {
-            background-color: #fee2e2;
-            color: #ef4444;
-            border: none;
+            background-color: rgba(127, 29, 29, 0.3);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.2);
             padding: 8px 16px;
             border-radius: 8px;
             font-size: 0.85rem;
@@ -442,12 +439,13 @@
         }
 
         .logout-btn:hover {
-            background-color: #fecaca;
+            background-color: rgba(127, 29, 29, 0.5);
         }
 
         @media print {
             body {
                 background: white;
+                color: black;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
@@ -456,7 +454,8 @@
             .tabs,
             .watermark,
             .tab-btn,
-            .print-btn {
+            .print-btn,
+            .view-data-card {
                 display: none !important;
             }
 
@@ -476,6 +475,35 @@
                 break-inside: avoid;
                 margin-bottom: 20px;
                 background: white;
+                color: black;
+            }
+
+            .report-header {
+                color: black;
+                border-bottom: 1px solid #ddd;
+            }
+
+            th {
+                background: #f3f4f6;
+                color: #4b5563;
+                border-bottom: 1px solid #ddd;
+            }
+
+            td {
+                color: black;
+                border-bottom: 1px solid #ddd;
+            }
+
+            .stat-title {
+                color: black !important;
+            }
+
+            .rank-info h4 {
+                color: black;
+            }
+
+            .rank-value {
+                color: black !important;
             }
 
             .tab-content {
@@ -503,19 +531,20 @@
         .view-data-card {
             cursor: pointer;
             text-align: center;
-            border: 2px dashed #cbd5e1;
-            background: rgba(255, 255, 255, 0.5);
+            border: 2px dashed #4b5563;
+            background: rgba(31, 41, 55, 0.5);
             transition: all 0.2s;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100px;
+            color: #d1d5db;
         }
 
         .view-data-card:hover {
             border-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.05);
-            color: #2563eb;
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
             transform: translateY(-2px);
         }
     </style>
@@ -538,7 +567,7 @@
                 <span>5a Royal Gaming OPC</span>
             </div>
             <div style="display: flex; align-items: center;">
-                <span style="font-size: 0.9rem; font-weight: 500; color: #6b7280;">Live Data</span>
+                <span style="font-size: 0.9rem; font-weight: 500; color: #9ca3af;">Live Data</span>
                 <a href="index.html" class="logout-btn">Logout</a>
             </div>
         </header>
@@ -971,17 +1000,17 @@
                     <div class="stat-card high-voids">
                         <div class="stat-title">Highest Daily Void <span></span></div>
                         <div class="rank-value">₱${highestDay.val.toLocaleString()}</div>
-                        <div style="font-size: 0.85rem; color: #6b7280; margin-top: 5px;">${highestDay.date}</div>
+                        <div style="font-size: 0.85rem; color: #9ca3af; margin-top: 5px;">${highestDay.date}</div>
                     </div>
                     <div class="stat-card low-voids">
                         <div class="stat-title">Lowest Daily Void <span></span></div>
                         <div class="rank-value">₱${lowestDay.val.toLocaleString()}</div>
-                        <div style="font-size: 0.85rem; color: #6b7280; margin-top: 5px;">${lowestDay.date}</div>
+                        <div style="font-size: 0.85rem; color: #9ca3af; margin-top: 5px;">${lowestDay.date}</div>
                     </div>
                     <div class="stat-card" style="border-top: 4px solid #3b82f6;">
                         <div class="stat-title">Grand Total <span></span></div>
                         <div class="rank-value" style="color: #2563eb;">₱${grandTotal.toLocaleString()}</div>
-                         <div style="font-size: 0.85rem; color: #6b7280; margin-top: 5px;">All Time</div>
+                         <div style="font-size: 0.85rem; color: #9ca3af; margin-top: 5px;">All Time</div>
                     </div>
                 </div>
             `;
@@ -1056,14 +1085,14 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 6 } },
+                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 6, color: '#e5e7eb' } },
                         tooltip: {
                             mode: 'index',
                             intersect: false,
-                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                            titleColor: '#1f2937',
-                            bodyColor: '#4b5563',
-                            borderColor: '#e5e7eb',
+                            backgroundColor: 'rgba(31, 41, 55, 0.9)',
+                            titleColor: '#f3f4f6',
+                            bodyColor: '#d1d5db',
+                            borderColor: '#374151',
                             borderWidth: 1
                         }
                     },
@@ -1075,10 +1104,12 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#9ca3af' }
                         },
                         x: {
-                            grid: { display: false }
+                            grid: { display: false },
+                            ticks: { color: '#9ca3af' }
                         }
                     }
                 }
@@ -1120,14 +1151,14 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 6 } },
+                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 6, color: '#e5e7eb' } },
                         tooltip: {
                             mode: 'index',
                             intersect: false,
-                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                            titleColor: '#1f2937',
-                            bodyColor: '#4b5563',
-                            borderColor: '#e5e7eb',
+                            backgroundColor: 'rgba(31, 41, 55, 0.9)',
+                            titleColor: '#f3f4f6',
+                            bodyColor: '#d1d5db',
+                            borderColor: '#374151',
                             borderWidth: 1
                         }
                     },
@@ -1139,10 +1170,12 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#9ca3af' }
                         },
                         x: {
-                            grid: { display: false }
+                            grid: { display: false },
+                            ticks: { color: '#9ca3af' }
                         }
                     }
                 }
