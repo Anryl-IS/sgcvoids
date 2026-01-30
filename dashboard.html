@@ -648,16 +648,18 @@
 
         async function fetchCSV(targetUrl) {
             // Priority 1: Use Vercel API Route (avoids CORS & 403s on deployment)
+            // If running locally via 'serve', this will 404, which is expected.
             const apiUrl = `/api/sheet?url=${encodeURIComponent(targetUrl)}&t=${Date.now()}`;
             try {
                 const response = await fetch(apiUrl);
                 if (response.ok) return await response.text();
             } catch (e) {
-                console.warn("Vercel API fetch failed, trying fallback...", e);
+                // Ignore API errors, fallback to proxy
             }
 
             // Priority 2: Fallback to CORS Proxy (for local development via npx serve)
-            const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(targetUrl);
+            const freshUrl = targetUrl + "&_t=" + Date.now();
+            const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(freshUrl);
             const response = await fetch(proxyUrl);
             if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
             return await response.text();
@@ -893,38 +895,101 @@
                 return;
             }
 
-            const rows = lines.map(line => {
-                const cells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => stripQuotes(c.trim()));
-                return cells;
-            });
+            // Robust CSV Splitter
+            const parseCSVRow = (row) => {
+                const result = [];
+                let current = '';
+                let inQuotes = false;
+                for (let i = 0; i < row.length; i++) {
+                    const char = row[i];
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        result.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                result.push(current.trim());
+                return result.map(c => stripQuotes(c));
+            };
 
+            const rows = lines.map(line => parseCSVRow(line));
             const header = rows[0];
             const dataRows = rows.slice(1);
 
-            let dateIdx = header.findIndex(h => h.toLowerCase().includes("date") || h.toLowerCase().includes("time"));
-            let valIdx = header.findIndex(h => h.toLowerCase().includes("amount") || h.toLowerCase().includes("qty") || h.toLowerCase().includes("quantity"));
+            console.log("Raw Header Line:", lines[0]);
+            console.log("Parsed Header:", header);
 
-            if (dateIdx === -1) {
-                if (dataRows.length > 0) {
-                    dateIdx = dataRows[0].findIndex(c => !isNaN(Date.parse(c)));
-                }
+            let dateIdx = header.findIndex(h => h.toLowerCase().includes("date") || h.toLowerCase().includes("time"));
+            let amountIdx = header.findIndex(h => h.toLowerCase().includes("amount") || h.toLowerCase().includes("total amount") || h.toLowerCase().includes("price"));
+            let receiptsIdx = header.findIndex(h => h.toLowerCase().includes("receipt") || h.toLowerCase().includes("reciept") || h.toLowerCase().includes("qty"));
+
+            console.log("Initial Indices:", { dateIdx, amountIdx, receiptsIdx });
+
+            // Fallbacks
+            if (dateIdx === -1 && header.length > 0) dateIdx = 0;
+
+            if (amountIdx === -1) {
+                if (header.length >= 2) amountIdx = 1; // Default to 2nd col
+                else amountIdx = 0;
             }
-            if (valIdx === -1) valIdx = header.length - 1;
+
+            // Receipt Fallback: If not found by name, but we have enough columns, assume 3rd column
+            if (receiptsIdx === -1) {
+                if (header.length >= 3) receiptsIdx = 2;
+                else if (dataRows.length > 0 && dataRows[0].length >= 3) receiptsIdx = 2;
+            }
+
+            console.log("Final Indices:", { dateIdx, amountIdx, receiptsIdx });
+
+            // For the chart, we prefer Amount, but if that's missing (unlikely given fallback), use Qty? 
+            // The previous logic used 'valIdx' which mixed them. Let's use amountIdx for value.
+            let valIdx = amountIdx;
 
             const dateMap = {};
+            let grandTotalAmount = 0;
+            let grandTotalReceipts = 0;
 
             dataRows.forEach(row => {
-                if (row.length <= valIdx || (dateIdx !== -1 && row.length <= dateIdx)) return;
+                let dateStr = "Unknown";
 
-                let dateStr = dateIdx !== -1 ? row[dateIdx] : `Row ${dataRows.indexOf(row) + 1}`;
-                let val = parseFloat(row[valIdx].replace(/,/g, '')) || 0;
+                // Determine Date
+                if (dateIdx !== -1 && row.length > dateIdx) {
+                    dateStr = row[dateIdx];
+                } else {
+                    dateStr = `Row ${dataRows.indexOf(row) + 1}`;
+                }
 
-                if (!dateMap[dateStr]) dateMap[dateStr] = 0;
-                dateMap[dateStr] += val;
+                // Initialize map entry
+                if (!dateMap[dateStr]) dateMap[dateStr] = { amount: 0, receipts: 0 };
+
+                // Parse Amount
+                if (amountIdx !== -1 && row.length > amountIdx) {
+                    let val = parseFloat(String(row[amountIdx]).replace(/,/g, '')) || 0;
+                    grandTotalAmount += val;
+                    dateMap[dateStr].amount += val;
+                }
+
+                // Parse Receipts/Qty
+                // If we have a receipts column, try to parse it. 
+                // If parsing fails (returns 0) OR no column exists, we assume each row is 1 receipt (1 void transaction).
+                let qty = 0;
+                if (receiptsIdx !== -1 && row.length > receiptsIdx) {
+                    qty = parseFloat(String(row[receiptsIdx]).replace(/,/g, '')) || 0;
+                }
+
+                // Fallback: If qty is 0, count the row itself as 1 receipt
+                if (qty === 0) qty = 1;
+
+                grandTotalReceipts += qty;
+                dateMap[dateStr].receipts += qty;
             });
 
+            // Flatten to array
             let timeSeries = Object.entries(dateMap)
-                .map(([date, val]) => ({ date, val }))
+                .map(([date, data]) => ({ date, val: data.amount, receipts: data.receipts }))
                 .sort((a, b) => {
                     const d1 = new Date(a.date);
                     const d2 = new Date(b.date);
@@ -990,14 +1055,6 @@
                 </div>
             `;
 
-            // Calculate Grand Total
-            let grandTotal = 0;
-            dataRows.forEach(row => {
-                if (row.length <= valIdx) return;
-                let val = parseFloat(row[valIdx].replace(/,/g, '')) || 0;
-                grandTotal += val;
-            });
-
             // Calculate High/Low Days
             let sortedByVal = [...timeSeries].sort((a, b) => b.val - a.val);
             let highestDay = sortedByVal.length > 0 ? sortedByVal[0] : { date: '-', val: 0 };
@@ -1017,8 +1074,8 @@
                     </div>
                     <div class="stat-card" style="border-top: 4px solid #3b82f6;">
                         <div class="stat-title">Grand Total <span></span></div>
-                        <div class="rank-value" style="color: #2563eb;">₱${grandTotal.toLocaleString()}</div>
-                         <div style="font-size: 0.85rem; color: #9ca3af; margin-top: 5px;">All Time</div>
+                        <div class="rank-value" style="color: #2563eb;">₱${grandTotalAmount.toLocaleString()}</div>
+                         <div style="font-size: 0.85rem; color: #9ca3af; margin-top: 5px;">All Time${grandTotalReceipts > 0 ? ` • ${grandTotalReceipts} Receipts` : ''}</div>
                     </div>
                 </div>
             `;
@@ -1038,16 +1095,24 @@
                          <div style="overflow-x: auto; max-height: 500px;">
                             <table class="compact-table">
                                 <thead style="position: sticky; top: 0; z-index: 10;">
-                                    <tr>${header.map(h => `<th>${h}</th>`).join('')}</tr>
+                                    <tr><th>Date</th><th>Receipts</th><th>Amount</th></tr>
                                 </thead>
                                 <tbody>
-                                    ${dataRows.map(row => `
-                                        <tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>
+                                    ${timeSeries.map(item => `
+                                        <tr>
+                                            <td>${item.date}</td>
+                                            <td>${item.receipts}</td>
+                                            <td>₱${item.val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                        </tr>
                                     `).join('')}
                                 </tbody>
                             </table>
                         </div>
-                        <div class="total-row">Grand Total: <span>₱${grandTotal.toLocaleString()}</span></div>
+                        <div class="total-row">
+                            Grand Total: 
+                            ${grandTotalReceipts > 0 ? `<span style="background: #374151; color: #d1d5db; margin-right: 8px;">${grandTotalReceipts} Receipts</span>` : ''}
+                            <span>₱${grandTotalAmount.toLocaleString()}</span>
+                        </div>
                     </div>
                 </div>
             `;
