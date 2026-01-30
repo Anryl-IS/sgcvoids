@@ -646,16 +646,30 @@
 
         const STOCK_DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQeTaEHJsuYfXHSBK1DePr0wjxElZZtEMnObZ5_iRdyYAt-1SvfPGbKVrsHRtUMOFI5_LyJiWnySn80/pub?gid=1817485847&single=true&output=csv";
 
+        async function fetchCSV(targetUrl) {
+            // Priority 1: Use Vercel API Route (avoids CORS & 403s on deployment)
+            const apiUrl = `/api/sheet?url=${encodeURIComponent(targetUrl)}&t=${Date.now()}`;
+            try {
+                const response = await fetch(apiUrl);
+                if (response.ok) return await response.text();
+            } catch (e) {
+                console.warn("Vercel API fetch failed, trying fallback...", e);
+            }
+
+            // Priority 2: Fallback to CORS Proxy (for local development via npx serve)
+            const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(targetUrl);
+            const response = await fetch(proxyUrl);
+            if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+            return await response.text();
+        }
+
         async function loadSheetData() {
             loadStockData();
 
-            const targetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQeTaEHJsuYfXHSBK1DePr0wjxElZZtEMnObZ5_iRdyYAt-1SvfPGbKVrsHRtUMOFI5_LyJiWnySn80/pub?output=csv&_t=" + Date.now();
-            const url = "https://corsproxy.io/?" + encodeURIComponent(targetUrl);
+            const targetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQeTaEHJsuYfXHSBK1DePr0wjxElZZtEMnObZ5_iRdyYAt-1SvfPGbKVrsHRtUMOFI5_LyJiWnySn80/pub?output=csv";
 
             try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-                const text = await response.text();
+                const text = await fetchCSV(targetUrl);
 
                 const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
                 const reports = [];
@@ -857,18 +871,12 @@
 
         async function loadStockData() {
             const container = document.getElementById("stockContainer");
-            if (!STOCK_DATA_URL) {
-                return;
-            }
+            if (!STOCK_DATA_URL) return;
 
-            const url = "https://corsproxy.io/?" + encodeURIComponent(STOCK_DATA_URL) + "&_t=" + Date.now();
             try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-                const text = await response.text();
+                const text = await fetchCSV(STOCK_DATA_URL);
 
                 const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-
                 renderStockAnalytics(lines);
 
             } catch (e) {
@@ -876,6 +884,7 @@
                 container.innerHTML = `<div class='loading-container' style='color: #ef4444'>Error loading stock data: ${e.message}</div>`;
             }
         }
+
 
         function renderStockAnalytics(lines) {
             const container = document.getElementById("stockContainer");
